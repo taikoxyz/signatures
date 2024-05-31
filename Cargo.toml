@@ -7,8 +7,9 @@ members = [
     "ed25519",
     "lms",
     "rfc6979",
-    "slh-dsa"
-]
+    "slh-dsa", 
+    "raiko-sp1-hack"
+    ]
 
 [profile.dev]
 opt-level = 2

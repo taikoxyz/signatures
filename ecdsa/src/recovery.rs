@@ -272,39 +272,44 @@ where
         signature: &Signature<C>,
         recovery_id: RecoveryId,
     ) -> Result<Self> {
-        let (r, s) = signature.split_scalars();
-        let z = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(&bits2field::<C>(prehash)?);
+        let mut vk: VerifyingKey<C>;
+        raiko_sp1_hack::unconstrained! {
+            let (r, s) = signature.split_scalars();
+            let z = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(&bits2field::<C>(prehash)?);
 
-        let r_bytes = if recovery_id.is_x_reduced() {
-            Option::<C::Uint>::from(
-                C::Uint::decode_field_bytes(&r.to_repr()).checked_add(&C::ORDER),
-            )
-            .ok_or_else(Error::new)?
-            .encode_field_bytes()
-        } else {
-            r.to_repr()
-        };
+            let r_bytes = if recovery_id.is_x_reduced() {
+                Option::<C::Uint>::from(
+                    C::Uint::decode_field_bytes(&r.to_repr()).checked_add(&C::ORDER),
+                )
+                .ok_or_else(Error::new).unwrap()
+                .encode_field_bytes()
+            } else {
+                r.to_repr()
+            };
 
-        let R: ProjectivePoint<C> = Option::<AffinePoint<C>>::from(AffinePoint::<C>::decompress(
-            &r_bytes,
-            u8::from(recovery_id.is_y_odd()).into(),
-        ))
-        .ok_or_else(Error::new)?
-        .into();
+            let R: ProjectivePoint<C> = Option::<AffinePoint<C>>::from(AffinePoint::<C>::decompress(
+                &r_bytes,
+                u8::from(recovery_id.is_y_odd()).into(),
+            ))
+            .ok_or_else(Error::new).unwrap()
+            .into();
+            
 
-        let r_inv = *r.invert();
-        let u1 = -(r_inv * z);
-        let u2 = r_inv * *s;
-        let pk = ProjectivePoint::<C>::lincomb(&[(ProjectivePoint::<C>::generator(), u1), (R, u2)]);
-        let vk = Self::from_affine(pk.into())?;
+            let r_inv = *r.invert();
+            let u1 = -(r_inv * z);
+            let u2 = r_inv * *s;
+            let pk = ProjectivePoint::<C>::lincomb(&[(ProjectivePoint::<C>::generator(), u1), (R, u2)]);
+            let vk = Self::from_affine(pk.into()).unwrap();
 
-        // Ensure signature verifies with the recovered key
-        verify_prehashed::<C>(
-            &ProjectivePoint::<C>::from(*vk.as_affine()),
-            &bits2field::<C>(prehash)?,
-            signature,
-        )?;
+            // Ensure signature verifies with the recovered key
+            verify_prehashed::<C>(
+                &ProjectivePoint::<C>::from(*vk.as_affine()),
+                &bits2field::<C>(prehash).unwrap(),
+                signature,
+            ).unwrap();
 
+            vk = vk;
+        }
         Ok(vk)
     }
 }
