@@ -174,7 +174,7 @@ impl From<RecoveryId> for u8 {
 #[cfg(feature = "signing")]
 impl<C> SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: PrimeCurve + CurveArithmetic + DigestPrimitive + elliptic_curve::point::PointCompression,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -206,7 +206,7 @@ where
 #[cfg(feature = "signing")]
 impl<C, D> DigestSigner<D, (Signature<C>, RecoveryId)> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: PrimeCurve + CurveArithmetic + DigestPrimitive + elliptic_curve::point::PointCompression,
     D: Digest,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
@@ -219,7 +219,7 @@ where
 #[cfg(feature = "signing")]
 impl<C> PrehashSigner<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: PrimeCurve + CurveArithmetic + DigestPrimitive + elliptic_curve::point::PointCompression,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -231,7 +231,7 @@ where
 #[cfg(feature = "signing")]
 impl<C> Signer<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: PrimeCurve + CurveArithmetic + DigestPrimitive + elliptic_curve::point::PointCompression,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {

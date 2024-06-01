@@ -56,7 +56,7 @@ pub trait SignPrimitive<C>:
     + Reduce<C::Uint, Bytes = FieldBytes<C>>
     + Sized
 where
-    C: PrimeCurve + CurveArithmetic<Scalar = Self>,
+    C: PrimeCurve + elliptic_curve::point::PointCompression + CurveArithmetic<Scalar = Self>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Try to sign the prehashed message.

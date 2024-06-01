@@ -476,7 +476,7 @@ where
 #[cfg(feature = "pkcs8")]
 impl<C> AssociatedAlgorithmIdentifier for Signature<C>
 where
-    C: PrimeCurve,
+    C: PrimeCurve + elliptic_curve::point::PointCompression,
     Self: AssociatedOid,
 {
     type Params = AnyRef<'static>;
@@ -686,7 +686,7 @@ where
 #[cfg(all(feature = "alloc", feature = "pkcs8"))]
 impl<C> DynAssociatedAlgorithmIdentifier for SignatureWithOid<C>
 where
-    C: PrimeCurve,
+    C: PrimeCurve + elliptic_curve::point::PointCompression,
 {
     fn algorithm_identifier(&self) -> spki::Result<AlgorithmIdentifierOwned> {
         Ok(AlgorithmIdentifierOwned {

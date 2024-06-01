@@ -198,7 +198,7 @@ where
 #[cfg(feature = "der")]
 impl<C, D> DigestVerifier<D, der::Signature<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: PrimeCurve + CurveArithmetic + elliptic_curve::point::PointCompression,
     D: Digest + FixedOutput<OutputSize = FieldBytesSize<C>>,
     AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
@@ -214,7 +214,7 @@ where
 #[cfg(feature = "der")]
 impl<C> PrehashVerifier<der::Signature<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: PrimeCurve + CurveArithmetic + DigestPrimitive + elliptic_curve::point::PointCompression,
     AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
     der::MaxSize<C>: ArrayLength<u8>,
@@ -229,7 +229,7 @@ where
 #[cfg(feature = "der")]
 impl<C> Verifier<der::Signature<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: PrimeCurve + CurveArithmetic + DigestPrimitive + elliptic_curve::point::PointCompression,
     AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
     der::MaxSize<C>: ArrayLength<u8>,
@@ -400,7 +400,7 @@ where
 #[cfg(feature = "pkcs8")]
 impl<C> SignatureAlgorithmIdentifier for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: PrimeCurve + CurveArithmetic + elliptic_curve::point::PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
     Signature<C>: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,

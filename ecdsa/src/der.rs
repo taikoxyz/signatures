@@ -244,7 +244,7 @@ where
 
 impl<C> From<crate::Signature<C>> for Signature<C>
 where
-    C: PrimeCurve,
+    C: PrimeCurve + elliptic_curve::point::PointCompression,
     MaxSize<C>: ArrayLength<u8>,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -268,7 +268,7 @@ where
 
 impl<C> TryFrom<Signature<C>> for crate::Signature<C>
 where
-    C: PrimeCurve,
+    C: PrimeCurve + elliptic_curve::point::PointCompression,
     MaxSize<C>: ArrayLength<u8>,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
