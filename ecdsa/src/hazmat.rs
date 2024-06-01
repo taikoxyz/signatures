@@ -77,6 +77,7 @@ where
         z: &FieldBytes<C>,
     ) -> Result<(Signature<C>, Option<RecoveryId>)>
     where
+        C: elliptic_curve::point::PointCompression,
         K: AsRef<Self> + Invert<Output = CtOption<Self>>,
     {
         sign_prehashed(self, k, z).map(|(sig, recid)| (sig, (Some(recid))))
@@ -120,7 +121,7 @@ where
 #[cfg(feature = "arithmetic")]
 pub trait VerifyPrimitive<C>: AffineCoordinates<FieldRepr = FieldBytes<C>> + Copy + Sized
 where
-    C: PrimeCurve + CurveArithmetic<AffinePoint = Self>,
+    C: PrimeCurve + CurveArithmetic<AffinePoint = Self> + elliptic_curve::point::PointCompression,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Verify the prehashed message against the provided ECDSA signature.
@@ -167,7 +168,7 @@ pub trait DigestPrimitive: PrimeCurve {
 #[cfg(feature = "digest")]
 impl<C> PrehashSignature for Signature<C>
 where
-    C: DigestPrimitive,
+    C: DigestPrimitive + elliptic_curve::point::PointCompression,
     <FieldBytesSize<C> as core::ops::Add>::Output: ArrayLength<u8>,
 {
     type Digest = C::Digest;
@@ -227,7 +228,7 @@ pub fn sign_prehashed<C, K>(
     z: &FieldBytes<C>,
 ) -> Result<(Signature<C>, RecoveryId)>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: PrimeCurve + CurveArithmetic + elliptic_curve::point::PointCompression,
     K: AsRef<Scalar<C>> + Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -273,7 +274,7 @@ pub fn verify_prehashed<C>(
     sig: &Signature<C>,
 ) -> Result<()>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: PrimeCurve + CurveArithmetic + elliptic_curve::point::PointCompression,
     SignatureSize<C>: ArrayLength<u8>,
 {
     let z = Scalar::<C>::reduce_bytes(z);

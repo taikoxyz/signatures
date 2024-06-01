@@ -6,6 +6,6 @@ use elliptic_curve::PrimeCurve;
 /// ECDSA signature with low-S normalization applied.
 #[derive(Clone, Eq, PartialEq)]
 #[repr(transparent)]
-pub struct NormalizedSignature<C: PrimeCurve> {
+pub struct NormalizedSignature<C: PrimeCurve + elliptic_curve::point::PointCompression> {
     inner: Signature<C>,
 }

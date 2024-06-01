@@ -195,14 +195,14 @@ pub type SignatureBytes<C> = GenericArray<u8, SignatureSize<C>>;
 /// The serialization uses a hexadecimal encoding when used with
 /// "human readable" text formats, and a binary encoding otherwise.
 #[derive(Clone, Eq, PartialEq)]
-pub struct Signature<C: PrimeCurve> {
+pub struct Signature<C: PrimeCurve + elliptic_curve::point::PointCompression> {
     r: ScalarPrimitive<C>,
     s: ScalarPrimitive<C>,
 }
 
 impl<C> Signature<C>
 where
-    C: PrimeCurve,
+    C: PrimeCurve + elliptic_curve::point::PointCompression,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Parse a signature from fixed-width bytes, i.e. 2 * the size of
@@ -293,7 +293,7 @@ where
 #[cfg(feature = "arithmetic")]
 impl<C> Signature<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: PrimeCurve + CurveArithmetic + elliptic_curve::point::PointCompression,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Get the `r` component of this signature
@@ -330,7 +330,7 @@ where
 
 impl<C> Copy for Signature<C>
 where
-    C: PrimeCurve,
+    C: PrimeCurve + elliptic_curve::point::PointCompression,
     SignatureSize<C>: ArrayLength<u8>,
     <SignatureSize<C> as ArrayLength<u8>>::ArrayType: Copy,
 {
@@ -338,7 +338,7 @@ where
 
 impl<C> From<Signature<C>> for SignatureBytes<C>
 where
-    C: PrimeCurve,
+    C: PrimeCurve + elliptic_curve::point::PointCompression,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(signature: Signature<C>) -> SignatureBytes<C> {
@@ -348,7 +348,7 @@ where
 
 impl<C> SignatureEncoding for Signature<C>
 where
-    C: PrimeCurve,
+    C: PrimeCurve + elliptic_curve::point::PointCompression,
     SignatureSize<C>: ArrayLength<u8>,
 {
     type Repr = SignatureBytes<C>;
@@ -356,7 +356,7 @@ where
 
 impl<C> TryFrom<&[u8]> for Signature<C>
 where
-    C: PrimeCurve,
+    C: PrimeCurve + elliptic_curve::point::PointCompression,
     SignatureSize<C>: ArrayLength<u8>,
 {
     type Error = Error;
@@ -368,7 +368,7 @@ where
 
 impl<C> fmt::Debug for Signature<C>
 where
-    C: PrimeCurve,
+    C: PrimeCurve + elliptic_curve::point::PointCompression,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -384,7 +384,7 @@ where
 
 impl<C> fmt::Display for Signature<C>
 where
-    C: PrimeCurve,
+    C: PrimeCurve + elliptic_curve::point::PointCompression,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -394,7 +394,7 @@ where
 
 impl<C> fmt::LowerHex for Signature<C>
 where
-    C: PrimeCurve,
+    C: PrimeCurve + elliptic_curve::point::PointCompression,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -407,7 +407,7 @@ where
 
 impl<C> fmt::UpperHex for Signature<C>
 where
-    C: PrimeCurve,
+    C: PrimeCurve + elliptic_curve::point::PointCompression,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -421,7 +421,7 @@ where
 #[cfg(feature = "arithmetic")]
 impl<C> str::FromStr for Signature<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: PrimeCurve + CurveArithmetic + elliptic_curve::point::PointCompression,
     SignatureSize<C>: ArrayLength<u8>,
 {
     type Err = Error;
@@ -462,7 +462,7 @@ where
 #[cfg(all(feature = "digest", feature = "hazmat"))]
 impl<C> AssociatedOid for Signature<C>
 where
-    C: hazmat::DigestPrimitive,
+    C: hazmat::DigestPrimitive + elliptic_curve::point::PointCompression,
     C::Digest: AssociatedOid,
 {
     const OID: ObjectIdentifier = match ecdsa_oid_for_digest(C::Digest::OID) {
@@ -531,7 +531,7 @@ where
 /// [RFC5758 § 3.2]: https://www.rfc-editor.org/rfc/rfc5758#section-3.2
 #[cfg(feature = "digest")]
 #[derive(Clone, Eq, PartialEq)]
-pub struct SignatureWithOid<C: PrimeCurve> {
+pub struct SignatureWithOid<C: PrimeCurve + elliptic_curve::point::PointCompression> {
     /// Inner signature type.
     signature: Signature<C>,
 
@@ -546,7 +546,7 @@ pub struct SignatureWithOid<C: PrimeCurve> {
 #[cfg(feature = "digest")]
 impl<C> SignatureWithOid<C>
 where
-    C: PrimeCurve,
+    C: PrimeCurve + elliptic_curve::point::PointCompression,
 {
     /// Create a new signature with an explicitly provided OID.
     ///
@@ -622,7 +622,7 @@ where
 #[cfg(feature = "digest")]
 impl<C> Copy for SignatureWithOid<C>
 where
-    C: PrimeCurve,
+    C: PrimeCurve + elliptic_curve::point::PointCompression,
     SignatureSize<C>: ArrayLength<u8>,
     <SignatureSize<C> as ArrayLength<u8>>::ArrayType: Copy,
 {
@@ -631,7 +631,7 @@ where
 #[cfg(feature = "digest")]
 impl<C> From<SignatureWithOid<C>> for Signature<C>
 where
-    C: PrimeCurve,
+    C: PrimeCurve + elliptic_curve::point::PointCompression,
 {
     fn from(sig: SignatureWithOid<C>) -> Signature<C> {
         sig.signature
@@ -641,7 +641,7 @@ where
 #[cfg(feature = "digest")]
 impl<C> From<SignatureWithOid<C>> for SignatureBytes<C>
 where
-    C: PrimeCurve,
+    C: PrimeCurve + elliptic_curve::point::PointCompression,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(signature: SignatureWithOid<C>) -> SignatureBytes<C> {
@@ -657,7 +657,7 @@ where
 #[cfg(all(feature = "digest", feature = "hazmat"))]
 impl<C> SignatureEncoding for SignatureWithOid<C>
 where
-    C: hazmat::DigestPrimitive,
+    C: hazmat::DigestPrimitive + elliptic_curve::point::PointCompression,
     C::Digest: AssociatedOid,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -672,7 +672,7 @@ where
 #[cfg(all(feature = "digest", feature = "hazmat"))]
 impl<C> TryFrom<&[u8]> for SignatureWithOid<C>
 where
-    C: hazmat::DigestPrimitive,
+    C: hazmat::DigestPrimitive + elliptic_curve::point::PointCompression,
     C::Digest: AssociatedOid,
     SignatureSize<C>: ArrayLength<u8>,
 {

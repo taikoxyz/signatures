@@ -84,7 +84,7 @@ where
 
 impl<C> VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: PrimeCurve + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
@@ -144,7 +144,7 @@ where
 
 impl<C, D> DigestVerifier<D, Signature<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: PrimeCurve + CurveArithmetic + elliptic_curve::point::PointCompression,
     D: Digest + FixedOutput<OutputSize = FieldBytesSize<C>>,
     AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
@@ -156,7 +156,7 @@ where
 
 impl<C> PrehashVerifier<Signature<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: PrimeCurve + CurveArithmetic + elliptic_curve::point::PointCompression,
     AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -168,7 +168,7 @@ where
 
 impl<C> Verifier<Signature<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: PrimeCurve + CurveArithmetic + DigestPrimitive  + elliptic_curve::point::PointCompression,
     AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -247,7 +247,7 @@ where
 
 impl<C> AsRef<AffinePoint<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: PrimeCurve + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
@@ -373,7 +373,7 @@ where
 
 impl<C> TryFrom<&[u8]> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: PrimeCurve + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {

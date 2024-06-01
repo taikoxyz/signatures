@@ -5,7 +5,8 @@ members = [
     "ecdsa",
     "ed448",
     "ed25519",
-    "rfc6979"
+    "rfc6979",
+    "raiko-sp1-hack"
 ]
 
 [profile.dev]

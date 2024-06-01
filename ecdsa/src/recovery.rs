@@ -1,5 +1,7 @@
 //! Public key recovery support.
 
+use elliptic_curve::point::PointCompression;
+
 use crate::{Error, Result};
 
 #[cfg(feature = "signing")]
@@ -98,7 +100,7 @@ impl RecoveryId {
         signature: &Signature<C>,
     ) -> Result<Self>
     where
-        C: DigestPrimitive + PrimeCurve + CurveArithmetic,
+        C: DigestPrimitive + PrimeCurve + CurveArithmetic + elliptic_curve::point::PointCompression,
         AffinePoint<C>:
             DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
         FieldBytesSize<C>: sec1::ModulusSize,
@@ -116,7 +118,7 @@ impl RecoveryId {
         signature: &Signature<C>,
     ) -> Result<Self>
     where
-        C: PrimeCurve + CurveArithmetic,
+        C: PrimeCurve + CurveArithmetic + elliptic_curve::point::PointCompression,
         D: Digest,
         AffinePoint<C>:
             DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
@@ -135,7 +137,7 @@ impl RecoveryId {
         signature: &Signature<C>,
     ) -> Result<Self>
     where
-        C: PrimeCurve + CurveArithmetic,
+        C: PrimeCurve + CurveArithmetic + elliptic_curve::point::PointCompression,
         AffinePoint<C>:
             DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
         FieldBytesSize<C>: sec1::ModulusSize,
@@ -241,7 +243,7 @@ where
 #[cfg(feature = "verifying")]
 impl<C> VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: PrimeCurve + CurveArithmetic + PointCompression,
     AffinePoint<C>:
         DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
@@ -274,6 +276,7 @@ where
     {
         Self::recover_from_prehash(&msg_digest.finalize(), signature, recovery_id)
     }
+    
 
     /// Recover a [`VerifyingKey`] from the given `prehash` of a message, the
     /// signature over that prehashed message, and a [`RecoveryId`].
@@ -283,34 +286,44 @@ where
         signature: &Signature<C>,
         recovery_id: RecoveryId,
     ) -> Result<Self> {
-        let (r, s) = signature.split_scalars();
-        let z = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(&bits2field::<C>(prehash)?);
+        use elliptic_curve::point::AffineCoordinates;
+        raiko_sp1_hack::unconstrained!(
 
-        let mut r_bytes = r.to_repr();
-        if recovery_id.is_x_reduced() {
-            match Option::<C::Uint>::from(
-                C::Uint::decode_field_bytes(&r_bytes).checked_add(&C::ORDER),
-            ) {
-                Some(restored) => r_bytes = restored.encode_field_bytes(),
-                // No reduction should happen here if r was reduced
-                None => return Err(Error::new()),
-            };
-        }
-        let R = AffinePoint::<C>::decompress(&r_bytes, u8::from(recovery_id.is_y_odd()).into());
+            let (r, s) = signature.split_scalars();
+            let z = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(&bits2field::<C>(prehash).unwrap());
 
-        if R.is_none().into() {
-            return Err(Error::new());
-        }
+            let mut r_bytes = r.to_repr();
+            if recovery_id.is_x_reduced() {
+                match Option::<C::Uint>::from(
+                    C::Uint::decode_field_bytes(&r_bytes).checked_add(&C::ORDER),
+                ) {
+                    Some(restored) => r_bytes = restored.encode_field_bytes(),
+                    // No reduction should happen here if r was reduced
+                    None => (),
+                };
+            }
+            let R = AffinePoint::<C>::decompress(&r_bytes, u8::from(recovery_id.is_y_odd()).into()).unwrap();
+            R.x();
+            
 
-        let R = ProjectivePoint::<C>::from(R.unwrap());
-        let r_inv = *r.invert();
-        let u1 = -(r_inv * z);
-        let u2 = r_inv * *s;
-        let pk = ProjectivePoint::<C>::lincomb(&ProjectivePoint::<C>::generator(), &u1, &R, &u2);
-        let vk = Self::from_affine(pk.into())?;
+            // if R.is_none().into() {
+            //     return ();
+            // }
 
-        // Ensure signature verifies with the recovered key
-        vk.verify_prehash(prehash, signature)?;
+            let R = ProjectivePoint::<C>::from(R);
+            let r_inv = *r.invert();
+            let u1 = -(r_inv * z);
+            let u2 = r_inv * *s;
+            let pk = ProjectivePoint::<C>::lincomb(&ProjectivePoint::<C>::generator(), &u1, &R, &u2);
+            let vk = Self::from_affine(pk.into()).unwrap();
+
+            // Ensure signature verifies with the recovered key
+            vk.verify_prehash(prehash, signature).unwrap();
+            let bytes = vk.to_sec1_bytes();
+            raiko_sp1_hack::io::hint_slice(&bytes);
+        );
+
+        let vk = Self::from_sec1_bytes(&raiko_sp1_hack::io::read_vec())?;
 
         Ok(vk)
     }
